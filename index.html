@@ -894,8 +894,8 @@ const VER=[["Έστησες ομαδάρα. Ο Μανιταράς είδε το 
 ["Καταστροφή. Ο Τρεϊλατζιής δεν χρειάστηκε να πει ούτε ένα ψέμα.","Καταστροφή. Ο Μανιταράς σου έστειλε ευχαριστήρια κάρτα και ένα καλάθι με φρούτα.","Ο Τριφύλλης ήπιε δύο ζιβανίες παραπάνω όταν είδε το ρόστερ. Τα παιδάκια στο πάρτι το κατάλαβαν.","Ο πάτερ Άγιος Τριφύλλιος κοίταξε τη λίστα, σταυροκοπήθηκε και ζήτησε να του φέρουν κι άλλο λάδι.","Η OLB δεν έκανε καν meme. Ανέβασε μόνο μια μαύρη φωτογραφία. Αυτό πόνεσε περισσότερο.","Ο Ρισβάνης πήγε στο αεροδρόμιο να φέρει τις μεταγραφές και γύρισε με άδειο πούλμαν. Αυτή τη φορά δεν έφταιγε αυτός.","Ο Μάκης από το Καϊμακλί λέει ότι ο πρόεδρος ξανάψαξε στο ίντερνετ το «αποζημίωση προπονητή». Και το έβαλε στα αγαπημένα.","Ο Χαπέσιης είδε το ρόστερ σου και δήλωσε ότι φέτος δεν θα χρειαστεί να σας αδικήσει. Θα τα καταφέρετε μόνοι σας.","Ο Κουλιμπαλί μάζεψε την ομάδα και ρώτησε ποιος ξέρει να παίζει δεξί μπακ. Σήκωσε χέρι ο Μάγειρας."]];
 function verdict(n){const a=VER[n>=14?0:n>=0?1:n>=-14?2:3];let l=-1;try{l=+localStorage.getItem('vlast')}catch(e){}let i=rnd(a.length);if(i===l)i=(i+1)%a.length;try{localStorage.setItem('vlast',i)}catch(e){}return a[i]}
 function openWin(){
-  const n=10+rnd(3),q=[];
-  while(q.length<n){if(!st.wdeck.length){const sn=wseen(),al=shuffled(NWIN),un=al.filter(i=>sn.indexOf(i)<0);if(un.length>=13)st.wdeck=un;else{wseen([]);st.wdeck=al}}const i=st.wdeck.pop();if(q.indexOf(i)<0)q.push(i)}
+  const n=10+rnd(3),q=[],used=[];let guard=0;
+  while(q.length<n){if(!st.wdeck.length){const sn=wseen(),al=shuffled(NWIN),un=al.filter(i=>sn.indexOf(i)<0);if(un.length>=13)st.wdeck=un;else{wseen([]);st.wdeck=al}}const i=st.wdeck.pop(),ps=WPL[i];if(++guard>2000||(q.indexOf(i)<0&&!gone(ps)&&!ps.some(p=>used.indexOf(p)>=0))){q.push(i);ps.forEach(p=>used.push(p))}}
   st.win={q:q,acc:[0,0,0,0]};wseen(wseen().concat(q));st.nextWin=st.q+18+rnd(6);
   st.pend.push({w:1,t:'Μεταγραφική περίοδος',x:'Άνοιξε το παράθυρο και ο χρόνος σταματά μέχρι να στήσεις την ομάδα. Οι μπάρες θα κουνηθούν όλες μαζί στο τέλος, ανάλογα με το τι αποφάσισες.',k:'',b:'Πάμε'});
 }
@@ -1331,6 +1331,11 @@ ENDS[3]=[["Άδειο ταμείο. Οι παίκτες έφυγαν με το �
 ["Γεμάτο ταμείο και άδεια ομάδα. Ο κόσμος σε έβγαλε «λογιστή» και η κερκίδα άδειασε.","Μάζεψες τόσα λεφτά που ο πρόεδρος πούλησε τον σύλλογο σε επενδυτικό ταμείο. Το ταμείο έφερε δικό του προπονητή.","Έκανες τόση οικονομία που οι παίκτες έπλεναν μόνοι τους τις φανέλες. Υπέγραψαν όλοι στον Καραβίδα.","Το ταμείο ξεχείλισε. Ο Μανιταράς ζήλεψε, σε κατήγγειλε στην εφορία και σε έψαχναν έξι μήνες."]];
 LABELS[3]='Ταμείο';}
 
+const PL=[/Φάμπι/,/Κουλιμπαλί/,/Κακού/,/Τάνκο/,/Μοντνόρ/,/Ταλιμπάν/,/Τουμάζο/,/Σίμιτς/,/Toro/];
+function plOf(t){const r=[];PL.forEach((p,i)=>{if(p.test(t))r.push(i)});return r}
+const WPL=WIN.map(c=>plOf(c[0]+' '+c[1])),PPL=POOL.map(c=>plOf(c[0]+' '+c[1]+' '+c[2]+' '+c[4]));
+const GO=/^(Πούλα|Πήγαινε|Ας φύγει|Το αξίζεις, πήγαινε|Άκου τη μάνα|Καλή επιτυχία|Καλή όρεξη, Toro|Προπονητικό|Ίσως)/;
+function gone(a){const s=st.sold||[];return a.some(p=>s.indexOf(p)>=0)}
 const RARE=/^(Μανιταράς|Ρόνι|Ζάντη|Χαπέσιης)$/;
 function dseen(v){try{if(v)localStorage.setItem('dseen',JSON.stringify(v));return JSON.parse(localStorage.getItem('dseen')||'[]')}catch(e){return []}}
 function mkdeck(){const d=shuffled(NDECK).filter(i=>!(RARE.test(POOL[i][0])&&Math.random()<0.65));let sn=dseen();if(sn.length>NDECK-120){sn=[];dseen([])}const S=new Set(sn);return d.filter(i=>S.has(i)).concat(d.filter(i=>!S.has(i)))}
@@ -1404,7 +1409,7 @@ function next(){
   if(st.forced!=null&&st.forced>=0){st.cur=st.forced;st.forced=null;return}
   for(let k=0;k<POOL.length*2;k++){
     if(!st.deck.length)st.deck=mkdeck();
-    const i=st.deck.pop();if(!POOL[i][6]||POOL[i][6]<=age()){st.cur=i;const sn=dseen();if(sn.indexOf(i)<0){sn.push(i);dseen(sn)}return}
+    const i=st.deck.pop();if((!POOL[i][6]||POOL[i][6]<=age())&&!gone(PPL[i])){st.cur=i;const sn=dseen();if(sn.indexOf(i)<0){sn.push(i);dseen(sn)}return}
   }
 }
 function fresh(){
@@ -1426,6 +1431,8 @@ function pick(side){
   if(st.inter){const was=st.inter;if(was.fx){const d=dead();if(d)return end(false,d)}if(st.q>=TOTAL&&!st.pend.length)return end(true,'Αφυπηρέτησες στα 80, μετά από εξήντα χρόνια στον ίδιο πάγκο. Το όνομά σου γράφτηκε στις χρυσές σελίδες του συλλόγου.');advance();draw();return}
   if(st.win){
     const wi=st.win.q.shift(),wc=WIN[wi],wf=side<0?wc[3]:wc[5];for(let i=0;i<4;i++)st.win.acc[i]+=wf[i];
+    {const lb=side<0?wc[2]:wc[4];let sp=-1;if(/Διάλεξε: Μοντνόρ ή Τάνκο/.test(wc[1]))sp=side<0?4:3;else if(WPL[wi].length&&(GO.test(lb)||/τα λεφτά μπήκαν/.test(wc[1])))sp=WPL[wi][0];
+    if(sp>=0){st.sold=st.sold||[];if(st.sold.indexOf(sp)<0)st.sold.push(sp);st.win.q=st.win.q.filter(k=>WPL[k].indexOf(sp)<0)}}
     const nx=WMAP[wi];if(nx){const k=nx[side<0?0:1];if(k>=0)st.win.q.unshift(k)}
     if(!st.win.q.length){const a=st.win.acc.map(v=>Math.max(-18,Math.min(18,Math.round(v*.55)))),n=a[0]+a[1]+a[2]+a[3];st.win=null;st.pend.push({w:1,fx:a,t:'Τέλος μεταγραφικής',x:verdict(n),k:'',b:'Συνέχεια'});advance()}
     draw();return
@@ -1464,6 +1471,7 @@ if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
 window.__t={pick:pick,NWIN:NWIN,WMAP:WMAP,wfind:wfind,WNEXT:WNEXT,LABELS:LABELS,WIN:WIN,NDECK:NDECK,findCard:findCard,FMAP:FMAP,FOLLOW:FOLLOW,POOL:POOL,CRISES:CRISES,ENDS:ENDS,get st(){return st}};
 })();
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+(function(){var v0=null;function chk(){fetch('sw.js',{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){if(v0&&t!==v0){location.reload()}v0=t}).catch(function(){})}chk();document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()})})();</script>
 </body>
 </html>
