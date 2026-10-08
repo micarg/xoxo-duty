@@ -47,6 +47,11 @@ h1 span{color:var(--flood)}
 .g[data-z="y"] .bar i{background:var(--flood)}
 .g[data-z="g"] .bar i{background:var(--green)}
 .g[data-z="b"] .bar i{background:var(--blue)}
+.gauges{transition:opacity .3s}
+.gauges.frozen{opacity:.6}
+.gauges.frozen .g .bar i{background:#9aa39d!important;transition:background .3s}
+.gauges.frozen .g{animation:none!important}
+.gauges.frozen .g b{color:#9aa39d!important}
 .g.high{border-color:var(--blue)}
 .g.high b{color:var(--blue)}
 .status{text-align:center}
@@ -1392,6 +1397,7 @@ function plan(AT){
   return out;
 }
 function draw(){
+  document.querySelector('.gauges').classList.toggle('frozen',!!st.win);
   for(let i=0;i<4;i++){const g=$('g'+i);g.querySelector('b').textContent=LABELS[i];g.querySelector('i').style.width=Math.round(st.s[i])+'%';g.classList.toggle('low',st.s[i]<20);g.classList.toggle('high',st.s[i]>85);g.dataset.z=st.s[i]<20?'r':st.s[i]<50?'y':st.s[i]<=85?'g':'b'}
   const b=best();$('best').textContent=b?'Ρεκόρ: '+b+' χρονών':'';
   $('wk').textContent=STATUS[st.status];$('yr').textContent=age()+' χρονών'+(st.win&&!st.inter?' · μεταγραφική, ο χρόνος σταμάτησε':'');
