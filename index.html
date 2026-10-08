@@ -35,6 +35,8 @@ body{background:var(--bg);color:var(--chalk);font-family:var(--body);font-size:1
 header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 h1{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;margin:0;text-transform:uppercase;letter-spacing:.02em}
 h1 span{color:var(--flood)}
+.hr{display:flex;align-items:center;gap:10px}
+#snd{min-height:0;padding:3px 8px;font-size:15px;line-height:1.2;border-radius:8px;background:transparent;border-color:var(--line)}
 .best{font-size:12px;color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 .gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .g{display:flex;flex-direction:column;gap:7px;min-width:0;background:var(--pitch);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
@@ -96,7 +98,7 @@ button:active{transform:scale(.98)}
 </head>
 <body>
 <div class="app" lang="el">
-  <header><h1>Χόχο <span>Duty</span></h1><div class="best" id="best"></div></header>
+  <header><h1>Χόχο <span>Duty</span></h1><div class="hr"><div class="best" id="best"></div><button id="snd" type="button" aria-label="Σίγαση ήχου">🔊</button></div></header>
   <div class="gauges">
     <div class="g" id="g0"><b>Οπαδοί</b><div class="bar"><i></i></div></div>
     <div class="g" id="g1"><b>Διοίκηση</b><div class="bar"><i></i></div></div>
@@ -1657,15 +1659,40 @@ function pick(side){
   if(st.q>=st.nextWin&&st.forced==null)openWin();
   next();advance();draw();
 }
+
+let AC=null,muted=false;try{muted=localStorage.getItem('mute')==='1'}catch(e){}
+function ac(){if(muted)return null;try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C()}if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}}
+function tone(f,t0,d,type,vol,f2){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.15,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03)}
+function noise(t0,d,f1,f2,vol,pan){const a=ac();if(!a)return;const b=a.createBuffer(1,Math.ceil(a.sampleRate*d),a.sampleRate),ch=b.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+  const s=a.createBufferSource(),bp=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+t0;s.buffer=b;bp.type='bandpass';bp.Q.value=1.1;bp.frequency.setValueAtTime(f1,t);bp.frequency.exponentialRampToValueAtTime(f2,t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+d*.35);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(bp);bp.connect(g);let o=g;if(pan&&a.createStereoPanner){const p=a.createStereoPanner();p.pan.value=pan;g.connect(p);o=p}o.connect(a.destination);s.start(t);s.stop(t+d+.02)}
+const SFX={
+  swipe:s=>noise(0,.24,500,2600,.28,s*.6),
+  card:()=>tone(1500,.13,.05,'triangle',.05),
+  result:()=>{tone(660,.14,.14,'sine',.12);tone(990,.24,.2,'sine',.09)},
+  crisis:()=>{[880,660,880,660].forEach((f,i)=>tone(f,.14+i*.2,.17,'square',.06))},
+  promo:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.14+i*.09,i<3?.16:.45,'triangle',.14))},
+  wopen:()=>{tone(1319,.14,.7,'sine',.11);tone(1976,.34,.8,'sine',.08)},
+  wend:()=>{tone(1250,.14,.05,'square',.05);tone(1650,.2,.05,'square',.05);tone(2490,.27,.45,'sine',.09)},
+  lose:()=>{[392,370,349].forEach((f,i)=>tone(f,.16+i*.34,.3,'triangle',.14));tone(330,1.18,.9,'triangle',.14,247)},
+  win:()=>{[523,659,784].forEach((f,i)=>tone(f,.14+i*.12,.14,'triangle',.15));tone(1047,.52,.9,'triangle',.15);noise(.3,1.8,700,1300,.14)}
+};
+let HL=null;
+function tick(){try{if(navigator.vibrate){navigator.vibrate(14);return}if(!HL){HL=document.createElement('label');HL.style.cssText='position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none';const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');HL.appendChild(i);document.body.appendChild(HL)}HL.click()}catch(e){}}
+function buzz(n){if(navigator.vibrate){try{navigator.vibrate(n>1?[18,70,40,70,40].slice(0,n*2-1):14)}catch(e){}return}tick();for(let i=1;i<n;i++)setTimeout(tick,i*110)}
+function kind(){return st.over?(st.won?'win':'lose'):st.inter?(st.inter.c?'crisis':st.inter.p?'promo':st.inter.w?(st.inter.fx?'wend':'wopen'):'result'):'card'}
+function act(side){SFX.swipe(side);pick(side);const k=kind();(SFX[k]||SFX.card)();buzz(k==='crisis'||k==='lose'?3:k==='promo'||k==='win'||k==='wopen'?2:1)}
+function sndIcon(){const b=$('snd');if(b){b.textContent=muted?'🔇':'🔊';b.setAttribute('aria-label',muted?'Ενεργοποίηση ήχου':'Σίγαση ήχου')}}
 let down=false,x0=0,dx=0;
 function rest(){card.style.transition='transform .2s';card.style.transform='';card.style.setProperty('--sh','0');$('tl').style.opacity=0;$('tr').style.opacity=0}
 card.addEventListener('pointerdown',e=>{down=true;x0=e.clientX;dx=0;card.style.transition='none';card.setPointerCapture(e.pointerId)});
 card.addEventListener('pointermove',e=>{if(!down)return;dx=e.clientX-x0;card.style.transform='translateX('+dx+'px) rotate('+(dx/20)+'deg)';card.style.setProperty('--sh',Math.min(.5,Math.abs(dx)/240).toFixed(2));
   if(!st.over&&!st.inter){$('tl').style.opacity=dx<-20?1:0;$('tr').style.opacity=dx>20?1:0}});
-card.addEventListener('pointerup',()=>{if(!down)return;down=false;const d=dx;rest();if(Math.abs(d)>80)pick(d<0?-1:1)});
+card.addEventListener('pointerup',()=>{if(!down)return;down=false;const d=dx;rest();if(Math.abs(d)>80)act(d<0?-1:1)});
 card.addEventListener('pointercancel',()=>{down=false;rest()});
-card.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')pick(-1);if(e.key==='ArrowRight')pick(1)});
-$('bl').addEventListener('click',()=>pick(-1));$('br').addEventListener('click',()=>pick(1));
+card.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')act(-1);if(e.key==='ArrowRight')act(1)});
+$('bl').addEventListener('click',()=>act(-1));$('br').addEventListener('click',()=>act(1));
+$('snd').addEventListener('click',()=>{muted=!muted;try{localStorage.setItem('mute',muted?'1':'0')}catch(e){}sndIcon();if(!muted){SFX.card();tick()}});sndIcon();
 function start(data){if(data&&data.v===6&&data.s&&data.deck){st=data;draw()}else fresh()}
 const hot=window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(()=>st);
