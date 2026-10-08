@@ -36,7 +36,16 @@ header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 h1{font-family:var(--display);font-weight:800;font-size:30px;line-height:1;margin:0;text-transform:uppercase;letter-spacing:.02em}
 h1 span{color:var(--flood)}
 .hr{display:flex;align-items:center;gap:10px}
-#snd{min-height:0;padding:3px 8px;font-size:15px;line-height:1.2;border-radius:8px;background:transparent;border-color:var(--line)}
+#snd{min-height:0;width:36px;height:32px;padding:0;display:grid;place-items:center;border-radius:8px;background:transparent;border-color:var(--line);color:var(--soft)}
+#snd.off{color:var(--hot)}
+#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;cursor:pointer;transition:opacity .45s;-webkit-tap-highlight-color:transparent}
+#splash.go{opacity:0;pointer-events:none}
+#splash .sp{text-align:center;display:grid;gap:18px;justify-items:center}
+#splash h2{font-family:var(--display);font-weight:800;font-size:64px;line-height:.9;margin:0;text-transform:uppercase;letter-spacing:.02em;color:var(--chalk)}
+#splash h2 span{display:block;color:var(--flood)}
+#splash p{margin:0;font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);animation:sp 1.6s ease-in-out infinite}
+#splash svg{color:var(--green)}
+@keyframes sp{50%{opacity:.35}}
 .best{font-size:12px;color:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 .gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .g{display:flex;flex-direction:column;gap:7px;min-width:0;background:var(--pitch);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
@@ -97,8 +106,9 @@ button:active{transform:scale(.98)}
 </style>
 </head>
 <body>
+<div id="splash" role="button" tabindex="0" lang="el"><div class="sp"><svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="32" cy="32" r="22"/><path d="M32 22l9 7-3.5 11h-11L23 29z"/><path d="M32 22V10M41 29l11-4M37.5 40l7 9M26.5 40l-7 9M23 29l-11-4"/></svg><h2>Χόχο <span>Duty</span></h2><p>Πάτα για σέντρα</p></div></div>
 <div class="app" lang="el">
-  <header><h1>Χόχο <span>Duty</span></h1><div class="hr"><div class="best" id="best"></div><button id="snd" type="button" aria-label="Σίγαση ήχου">🔊</button></div></header>
+  <header><h1>Χόχο <span>Duty</span></h1><div class="hr"><div class="best" id="best"></div><button id="snd" type="button" aria-label="Σίγαση ήχου"></button></div></header>
   <div class="gauges">
     <div class="g" id="g0"><b>Οπαδοί</b><div class="bar"><i></i></div></div>
     <div class="g" id="g1"><b>Διοίκηση</b><div class="bar"><i></i></div></div>
@@ -1686,7 +1696,9 @@ try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
 function buzz(n){if(navigator.vibrate){try{navigator.vibrate(n>1?[18,70,40,70,40].slice(0,n*2-1):14)}catch(e){}return}tick();for(let i=1;i<n;i++)setTimeout(tick,i*110)}
 function kind(){return st.over?(st.won?'win':'lose'):st.inter?(st.inter.c?'crisis':st.inter.p?'promo':st.inter.w?(st.inter.fx?'wend':'wopen'):'result'):'card'}
 function act(side){SFX.swipe(side);pick(side);const k=kind();(SFX[k]||SFX.card)();buzz(k==='crisis'||k==='lose'?3:k==='promo'||k==='win'||k==='wopen'?2:1)}
-function sndIcon(){const b=$('snd');if(b){b.textContent=muted?'🔇':'🔊';b.setAttribute('aria-label',muted?'Ενεργοποίηση ήχου':'Σίγαση ήχου')}}
+function sndIcon(){const b=$('snd');if(b){b.innerHTML=muted?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>';b.classList.toggle('off',muted);b.setAttribute('aria-label',muted?'Ενεργοποίηση ήχου':'Σίγαση ήχου')}}
+function whistle(t0,d){const a=ac();if(!a)return;const o=a.createOscillator(),l=a.createOscillator(),lg=a.createGain(),g=a.createGain(),t=a.currentTime+t0;o.type='sine';o.frequency.value=2750;l.frequency.value=28;lg.gain.value=140;l.connect(lg);lg.connect(o.frequency);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.09,t+.02);g.gain.setValueAtTime(.09,t+d-.04);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);l.start(t);o.stop(t+d+.02);l.stop(t+d+.02)}
+function kickoff(){const sp=$('splash');if(!sp||sp.classList.contains('go'))return;unlock();noise(0,2.2,500,900,.16);whistle(.25,.18);whistle(.5,.6);buzz(2);sp.classList.add('go');setTimeout(()=>{sp.style.display='none'},500)}
 let down=false,x0=0,dx=0;
 function rest(){card.style.transition='transform .2s';card.style.transform='';card.style.setProperty('--sh','0');$('tl').style.opacity=0;$('tr').style.opacity=0}
 card.addEventListener('pointerdown',e=>{down=true;x0=e.clientX;dx=0;card.style.transition='none';card.setPointerCapture(e.pointerId)});
@@ -1697,6 +1709,7 @@ card.addEventListener('pointercancel',()=>{down=false;rest()});
 card.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')act(-1);if(e.key==='ArrowRight')act(1)});
 $('bl').addEventListener('click',()=>act(-1));$('br').addEventListener('click',()=>act(1));
 $('snd').addEventListener('click',()=>{muted=!muted;try{localStorage.setItem('mute',muted?'1':'0')}catch(e){}sndIcon();if(muted){if(SIL)SIL.pause()}else{unlock();SFX.card();tick()}});sndIcon();
+$('splash').addEventListener('click',kickoff);$('splash').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')kickoff()});
 function start(data){if(data&&data.v===6&&data.s&&data.deck){st=data;draw()}else fresh()}
 const hot=window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(()=>st);
